@@ -4,7 +4,7 @@
 
 ![ShowJava Banner v0.1](https://res.cloudinary.com/niranjan94/image/upload/v1518341743/banner_lihb7z.png)
 
-An APK (android application), JAR & Dex decompiler for android.
+An APK (Android Application), JAR & Dex decompiler for android.
 
 > The current GitHub master branch may be ahead of the Play Store version (and could be unstable/incomplete/buggy at some places)
 
