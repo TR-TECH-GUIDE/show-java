@@ -51,15 +51,17 @@ abstract class BaseDecompiler(val context: Context, val data: Data) {
     private var id = data.getString("id")
     private var processNotifier: ProcessNotifier? = null
     private var runAttemptCount: Int = 0
-    protected var outOfMemory: Boolean = false
+    protected var outOfMemory = false
 
     protected val decompiler = data.getString("decompiler")
     protected val type = PackageInfo.Type.values()[data.getInt("type", 0)]
     private val maxAttempts = data.getInt("maxAttempts", UserPreferences.DEFAULTS.MAX_ATTEMPTS)
     private val memoryThreshold = data.getInt("memoryThreshold", 80)
 
-    protected val packageName: String = data.getString("name").toString()
-    protected val packageLabel: String = data.getString("label").toString()
+    protected val packageName = data.getString("name").toString()
+    protected val packageLabel = data.getString("label").toString()
+
+    protected val keepIntermediateFiles = data.getBoolean("keepIntermediateFiles", UserPreferences.DEFAULTS.KEEP_INTERMEDIATE_FILES)
 
     protected val workingDirectory: File = appStorage.resolve("sources/$packageName/")
     protected val cacheDirectory: File = appStorage.resolve("sources/.cache/")
@@ -73,6 +75,8 @@ abstract class BaseDecompiler(val context: Context, val data: Data) {
 
     private val disposables = CompositeDisposable()
     private var onLowMemory: ((Boolean) -> Unit)? = null
+    private var memoryThresholdCrossCount = 0
+    protected open val maxMemoryAdjustmentFactor = 1.25
 
     init {
         @Suppress("LeakingThis")
@@ -96,7 +100,7 @@ abstract class BaseDecompiler(val context: Context, val data: Data) {
             }
         }
 
-        return ListenableWorker.Result.SUCCESS
+        return ListenableWorker.Result.success()
     }
 
     fun withAttempt(attempt: Int = 0): ListenableWorker.Result {
@@ -116,25 +120,31 @@ abstract class BaseDecompiler(val context: Context, val data: Data) {
 
     private fun monitorMemory() {
         disposables.add(
-            Observable.interval(1, TimeUnit.SECONDS)
+            Observable.interval(1000, TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .subscribe {
-                    val maxAdjusted = Runtime.getRuntime().maxMemory() / 2
-                    val used = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()).let { m ->
+                    val maxAdjusted = Runtime.getRuntime().maxMemory() / maxMemoryAdjustmentFactor
+                    val used = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()).toDouble().let { m ->
                         if (m > maxAdjusted) maxAdjusted else m
                     }
-                    val usedPercentage = (used.toDouble() / maxAdjusted.toDouble()) * 100
+                    val usedPercentage = (used / maxAdjusted) * 100
 
                     Timber.d("[mem] ----")
-                    Timber.d("[mem] Used: ${FileUtils.byteCountToDisplaySize(used)}")
-                    Timber.d("[mem] Max: ${FileUtils.byteCountToDisplaySize(maxAdjusted)}")
+                    Timber.d("[mem] Used: ${FileUtils.byteCountToDisplaySize(used.toLong())}")
+                    Timber.d("[mem] Max: ${FileUtils.byteCountToDisplaySize(maxAdjusted.toLong())} at factor $maxMemoryAdjustmentFactor")
                     Timber.d("[mem] Used %: $usedPercentage")
 
                     broadcastStatus("memory", "%.2f".format(usedPercentage), "memory")
 
                     if (usedPercentage > memoryThreshold) {
-                        onLowMemory?.invoke(true)
+                        if (memoryThresholdCrossCount > 2) {
+                            onLowMemory?.invoke(true)
+                        } else {
+                            memoryThresholdCrossCount++
+                        }
+                    } else {
+                        memoryThresholdCrossCount = 0
                     }
                 }
         )
@@ -165,12 +175,12 @@ abstract class BaseDecompiler(val context: Context, val data: Data) {
      */
     protected fun exit(exception: Exception?): ListenableWorker.Result {
         Timber.e(exception)
-        onStopped(false)
+        onStopped()
         disposables.clear()
         return if (runAttemptCount >= (maxAttempts - 1))
-            ListenableWorker.Result.FAILURE
+            ListenableWorker.Result.failure()
         else
-            ListenableWorker.Result.RETRY
+            ListenableWorker.Result.retry()
     }
 
     /**
@@ -179,7 +189,7 @@ abstract class BaseDecompiler(val context: Context, val data: Data) {
     protected fun successIf(condition: Boolean): ListenableWorker.Result {
         disposables.clear()
         return if (condition)
-            ListenableWorker.Result.SUCCESS
+            ListenableWorker.Result.success()
         else
             exit(Exception("Success condition failed"))
     }
@@ -226,13 +236,10 @@ abstract class BaseDecompiler(val context: Context, val data: Data) {
     /**
      * Cancel notification on worker stop
      */
-    open fun onStopped(cancelled: Boolean = false) {
-        Timber.d("[cancel-request] cancelled: $cancelled")
+    open fun onStopped() {
+        Timber.d("[cancel-request] cancelled")
         disposables.clear()
         processNotifier?.cancel()
-        if (cancelled) {
-            FileUtils.deleteQuietly(workingDirectory)
-        }
     }
 
     companion object {

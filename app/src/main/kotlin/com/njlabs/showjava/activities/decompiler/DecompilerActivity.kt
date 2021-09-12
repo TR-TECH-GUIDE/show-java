@@ -32,6 +32,7 @@ import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.njlabs.showjava.Constants
 import com.njlabs.showjava.R
@@ -91,9 +92,6 @@ class DecompilerActivity : BaseActivity() {
         val decompilerDescriptions = resources.getStringArray(R.array.decompilerDescriptions)
 
         decompilersValues.forEachIndexed { index, decompiler ->
-            if (!isAvailable(decompiler)) {
-                return
-            }
             val view = LayoutInflater.from(pickerList.context)
                 .inflate(R.layout.layout_pick_decompiler_list_item, pickerList, false)
             view.decompilerName.text = decompilers[index]
@@ -116,6 +114,10 @@ class DecompilerActivity : BaseActivity() {
             sb.setSpan(nss, 8, warning.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
             sb.setSpan(iss, 0, warning.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
             systemAppWarning.text = sb
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            decompilersUnavailableNotification.visibility = View.VISIBLE
         }
 
         disposables.add(
@@ -180,11 +182,22 @@ class DecompilerActivity : BaseActivity() {
 
     private fun startProcess(view: View, decompiler: String, decompilerIndex: Int) {
 
+        if (!isAvailable(decompiler)) {
+            AlertDialog.Builder(context)
+                .setTitle(getString(R.string.decompilerUnavailable))
+                .setMessage(getString(R.string.decompilerUnavailableExplanation))
+                .setIcon(R.drawable.ic_error_outline_black)
+                .setNegativeButton(android.R.string.ok, null)
+                .show()
+            return
+        }
+
         val inputMap = hashMapOf(
             "shouldIgnoreLibs" to userPreferences.ignoreLibraries,
             "maxAttempts" to userPreferences.maxAttempts,
             "chunkSize" to userPreferences.chunkSize,
             "memoryThreshold" to userPreferences.memoryThreshold,
+            "keepIntermediateFiles" to userPreferences.keepIntermediateFiles,
             "decompiler" to decompiler,
             "name" to packageInfo.name,
             "label" to packageInfo.label,

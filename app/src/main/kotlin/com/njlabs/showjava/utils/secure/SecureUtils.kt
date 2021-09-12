@@ -67,8 +67,8 @@ class SecureUtils(val context: Context) {
             enableGooglePlayLicensing(BuildConfig.PLAY_LICENSE_KEY)
             if (BuildConfig.EXTENDED_VALIDATION) {
                 enableInstallerId(InstallerID.GOOGLE_PLAY)
-                enableUnauthorizedAppsCheck(true)
-                enableDebugCheck(true)
+                enableUnauthorizedAppsCheck()
+                enableDebugCheck()
             }
             callback {
                 doNotAllow { a, b ->
@@ -164,8 +164,10 @@ class SecureUtils(val context: Context) {
                     emitter.onNext(it)
                     emitter.onComplete()
                 }, Response.ErrorListener {
-                    emitter.onError(it)
-                    emitter.onComplete()
+                    if (!emitter.isDisposed) {
+                        emitter.onError(it)
+                        emitter.onComplete()
+                    }
                 }
             )
             RequestQueue.getInstance(context).addToRequestQueue(request)

@@ -234,6 +234,8 @@ class ResourcesExtractionWorker(context: Context, data: Data) : BaseDecompiler(c
         // Due to its dependency on the javax.imageio.ImageIO class which is unavailable on android
 
         val sourceInfo = SourceInfo.from(workingDirectory)
+            .setPackageLabel(packageLabel)
+            .setPackageName(packageName)
 
         if (type == PackageInfo.Type.APK) {
             parsedInputApkFile = ApkFile(inputPackageFile)
@@ -255,6 +257,6 @@ class ResourcesExtractionWorker(context: Context, data: Data) : BaseDecompiler(c
 
         onCompleted()
 
-        return ListenableWorker.Result.SUCCESS
+        return ListenableWorker.Result.success()
     }
 }
