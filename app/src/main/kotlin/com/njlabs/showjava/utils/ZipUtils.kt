@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 package com.njlabs.showjava.utils
 
 
-import com.njlabs.showjava.utils.ktx.appStorage
+import com.njlabs.showjava.utils.ktx.Storage
 import timber.log.Timber
 import java.io.*
 import java.util.zip.ZipEntry
@@ -32,7 +32,7 @@ import java.util.zip.ZipOutputStream
 object ZipUtils {
 
     fun zipDir(dir: File, packageId: String): File {
-        val zipIntoDir = appStorage.resolve("archives")
+        val zipIntoDir = Storage.getInstance().appStorage.resolve("archives")
         if (!zipIntoDir.exists() || !zipIntoDir.isDirectory) {
             zipIntoDir.mkdirs()
         }
@@ -77,7 +77,7 @@ object ZipUtils {
     @Throws(Exception::class)
     private fun addFolderToZip(path: String, srcFolder: String, zip: ZipOutputStream) {
         val folder = File(srcFolder)
-        for (fileName in folder.list()) {
+        for (fileName in folder.list()!!) {
             if (path == "") {
                 addFileToZip(folder.name, "$srcFolder/$fileName", zip)
             } else {

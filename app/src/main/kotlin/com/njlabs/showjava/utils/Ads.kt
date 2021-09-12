@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 package com.njlabs.showjava.utils
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -53,6 +54,7 @@ class Ads(val context: Context) {
                         .putInt("consentStatus", consentStatus.ordinal)
                         .commit()
                 }
+
                 override fun onFailedToUpdateConsentInfo(errorDescription: String) {
                     getPreferences().edit()
                         .putInt("consentStatus", ConsentStatus.UNKNOWN.ordinal)
@@ -65,34 +67,41 @@ class Ads(val context: Context) {
      * Load the consent screen and prepare to display.
      */
     fun loadConsentScreen(): ConsentForm? {
-        consentForm = ConsentForm.Builder(context, URL(context.getString(R.string.privacyPolicyUrl)))
-            .withListener(object : ConsentFormListener() {
-                override fun onConsentFormLoaded() {
-                    consentForm.show()
-                }
-
-                override fun onConsentFormOpened() {
-                    Timber.d("[consent-screen] onConsentFormOpened")
-                }
-
-                override fun onConsentFormClosed(consentStatus: ConsentStatus?, userPrefersAdFree: Boolean?) {
-                    consentStatus?.let {
-                        ConsentInformation.getInstance(context).consentStatus = it
-                        getPreferences().edit().putInt("consentStatus", consentStatus.ordinal).apply()
+        consentForm =
+            ConsentForm.Builder(context, URL(context.getString(R.string.privacyPolicyUrl)))
+                .withListener(object : ConsentFormListener() {
+                    override fun onConsentFormLoaded() {
+                        if (context is Activity && !context.isFinishing) {
+                            consentForm.show()
+                        }
                     }
-                    if (userPrefersAdFree != null && userPrefersAdFree) {
-                        context.startActivity(Intent(context, PurchaseActivity::class.java))
-                    }
-                }
 
-                override fun onConsentFormError(errorDescription: String?) {
-                    Timber.d("[consent-screen] onConsentFormError: $errorDescription")
-                }
-            })
-            .withPersonalizedAdsOption()
-            .withNonPersonalizedAdsOption()
-            .withAdFreeOption()
-            .build()
+                    override fun onConsentFormOpened() {
+                        Timber.d("[consent-screen] onConsentFormOpened")
+                    }
+
+                    override fun onConsentFormClosed(
+                        consentStatus: ConsentStatus?,
+                        userPrefersAdFree: Boolean?
+                    ) {
+                        consentStatus?.let {
+                            ConsentInformation.getInstance(context).consentStatus = it
+                            getPreferences().edit().putInt("consentStatus", consentStatus.ordinal)
+                                .apply()
+                        }
+                        if (userPrefersAdFree != null && userPrefersAdFree) {
+                            context.startActivity(Intent(context, PurchaseActivity::class.java))
+                        }
+                    }
+
+                    override fun onConsentFormError(errorDescription: String?) {
+                        Timber.d("[consent-screen] onConsentFormError: $errorDescription")
+                    }
+                })
+                .withPersonalizedAdsOption()
+                .withNonPersonalizedAdsOption()
+                .withAdFreeOption()
+                .build()
         consentForm.load()
         return consentForm
     }

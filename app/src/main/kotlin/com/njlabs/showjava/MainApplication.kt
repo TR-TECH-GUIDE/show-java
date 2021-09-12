@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,25 +26,31 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.work.WorkManager
-import com.njlabs.showjava.utils.Ads
-import com.njlabs.showjava.utils.UserPreferences
-import com.njlabs.showjava.utils.logging.ProductionTree
-import io.reactivex.Observable
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
 import com.crashlytics.android.Crashlytics
+import com.crashlytics.android.core.CrashlyticsCore
 import com.google.firebase.iid.FirebaseInstanceId
+import com.njlabs.showjava.utils.Ads
+import com.njlabs.showjava.utils.StethoUtils
+import com.njlabs.showjava.utils.UserPreferences
+import com.njlabs.showjava.utils.ktx.Storage
+import com.njlabs.showjava.utils.logging.ProductionTree
 import io.fabric.sdk.android.Fabric
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 
 class MainApplication : MultiDexApplication() {
 
-    val disposables = CompositeDisposable()
     lateinit var instanceId: String
 
     override fun onCreate() {
         super.onCreate()
+
+        Storage.init(this)
+
         instanceId = FirebaseInstanceId.getInstance().id
 
         PreferenceManager.setDefaultValues(
@@ -71,23 +77,26 @@ class MainApplication : MultiDexApplication() {
         )
 
         Ads(this).init()
-        Fabric.with(this, Crashlytics())
+
+        val crashlyticsCore = CrashlyticsCore.Builder()
+            .disabled(BuildConfig.DEBUG)
+            .build()
+
+        Fabric.with(this, Crashlytics.Builder().core(crashlyticsCore).build())
+
         Crashlytics.setUserIdentifier(instanceId)
 
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
+            StethoUtils.install(this)
         } else {
             Timber.plant(ProductionTree())
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            disposables.add(
+            GlobalScope.launch {
                 cleanStaleNotifications()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.io())
-                    .onErrorReturn {}
-                    .subscribe()
-            )
+            }
         }
     }
 
@@ -95,23 +104,18 @@ class MainApplication : MultiDexApplication() {
      * Clean any stale notifications not linked to any decompiler process
      */
     @RequiresApi(Build.VERSION_CODES.M)
-    fun cleanStaleNotifications(): Observable<Unit> {
-        return Observable.fromCallable {
+    suspend fun cleanStaleNotifications() {
+        withContext(Dispatchers.IO) {
             val manager = applicationContext
                 .getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val workManager = WorkManager.getInstance()
+            val workManager = WorkManager.getInstance(this@MainApplication)
             manager.activeNotifications.forEach { notification ->
-                val status = workManager.getStatusesForUniqueWorkLiveData(notification.tag)
+                val status = workManager.getWorkInfosForUniqueWorkLiveData(notification.tag)
                     .value?.any { it.state.isFinished }
                 if (status == null || status == true) {
                     manager.cancel(notification.tag, notification.id)
                 }
             }
         }
-    }
-
-    override fun onTerminate() {
-        super.onTerminate()
-        disposables.clear()
     }
 }

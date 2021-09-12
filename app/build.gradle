@@ -1,7 +1,7 @@
 /*
  //noinspection GradleDependency
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,9 +26,9 @@ apply plugin: "io.michaelrocks.paranoid"
 apply plugin: "ru.tinkoff.gradle.jarjar"
 
 def versionMajor = 3
-def versionMinor = 0
-def versionPatch = 4
-def versionBuild = 6
+def versionMinor = 1
+def versionPatch = 0
+def versionBuild = 0
 
 def getGitHash = { ->
     def stdout = new ByteArrayOutputStream()
@@ -57,16 +57,16 @@ try {
 }
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion "28.0.3"
+    compileSdkVersion 29
+    buildToolsVersion "30.0.0-rc2"
 
     dexOptions {
         preDexLibraries = preDexEnabled && !isCi
     }
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 28
+        minSdkVersion 19
+        targetSdkVersion 29
         multiDexEnabled true
         multiDexKeepProguard file("multidex-config.pro")
 
@@ -96,8 +96,10 @@ android {
         buildConfigField "String", "GIT_SHA", "\"${getGitHash()}\""
         buildConfigField "String", "BUILD_TIME", "\"${buildTime}\""
         buildConfigField "String", "PLAY_LICENSE_KEY", "\"${props.getProperty("googlePlayLicenseKey")}\""
-        buildConfigField "String", "IAP_PRODUCT_ID", "\"${props.getProperty("IapProductId")}\""
+        buildConfigField "String", "IAP_PRODUCT_ID", "\"${props.getProperty("iapProductId")}\""
         buildConfigField "String", "BACKEND_URL", "\"${props.getProperty("backendUrl")}\""
+        buildConfigField "String", "ENCRYPTION_KEY", "\"${props.getProperty("encryptionKey")}\""
+        buildConfigField "String", "ENCRYPTION_SALT", "\"${props.getProperty("encryptionSalt")}\""
         buildConfigField "String", "PURCHASE_VERIFIER_PATH", "\"${props.getProperty("purchaseVerifierPath")}\""
         buildConfigField "Boolean", "IS_CI", "${isCi}"
         buildConfigField "Boolean", "EXTENDED_VALIDATION", "false"
@@ -106,8 +108,13 @@ android {
     }
 
     compileOptions {
+        coreLibraryDesugaringEnabled false
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
     dexOptions {
@@ -119,7 +126,8 @@ android {
         exclude "META-INF/LICENSE.txt"
         exclude "META-INF/NOTICE.txt"
         exclude "META-INF/MANIFEST.MF"
-        exclude "META-INF/rxjava.properties"
+        exclude "resources.arsc"
+        pickFirst 'META-INF/library_release.kotlin_module'
     }
 
     lintOptions {
@@ -140,11 +148,13 @@ android {
 
     buildTypes {
         release {
+            manifestPlaceholders = [crashlytics:"true"]
             minifyEnabled true
-            shrinkResources true
+            shrinkResources false
             buildConfigField "Boolean", "EXTENDED_VALIDATION", "true"
         }
         debug {
+            manifestPlaceholders = [crashlytics:"false"]
             buildConfigField "Boolean", "EXTENDED_VALIDATION", props.getProperty("debugExtendedValidation", "false")
             minifyEnabled props.getProperty("minifyEnabled", "true") == "true"
             shrinkResources props.getProperty("shrinkResources", "true") == "true"
@@ -158,6 +168,7 @@ android {
         test.java.srcDirs += "src/test/kotlin"
         androidTest.java.srcDirs += "src/androidTest/kotlin"
     }
+    dynamicFeatures = [':modules:decompilers:jadx_24', ':modules:decompilers:fernflower_24', ':modules:decompilers:cfr_16']
 }
 
 configurations.all {
@@ -166,37 +177,47 @@ configurations.all {
     }
 }
 
-def androidxVersion = "1.0.0"
-def workVersion = "1.0.0-alpha10"
+def work_version = '2.1.0-rc01'
 
 dependencies {
+    api 'androidx.core:core-ktx:1.2.0'
+    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    androidTestImplementation 'androidx.annotation:annotation:1.1.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.5'
+
     // Multi-dex
     implementation "androidx.multidex:multidex:2.0.1"
 
     // Kotlin Standard library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.0"
+    implementation "androidx.fragment:fragment-ktx:1.2.3"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
 
     // Firebase-related dependencies
-    implementation "com.google.firebase:firebase-core:16.0.6"
-    implementation "com.google.firebase:firebase-ads:17.1.2"
-    implementation "com.crashlytics.sdk.android:crashlytics:2.9.8"
+    implementation 'com.google.firebase:firebase-core:17.2.3'
+    implementation 'com.google.firebase:firebase-ads:19.0.1'
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 
     // AndroidX support libraries
-    implementation "androidx.appcompat:appcompat:$androidxVersion"
-    implementation "com.google.android.material:material:$androidxVersion"
-    implementation "androidx.cardview:cardview:$androidxVersion"
-    implementation "androidx.preference:preference:$androidxVersion"
-    implementation "androidx.recyclerview:recyclerview:$androidxVersion"
-    implementation "androidx.core:core:$androidxVersion"
-    implementation "com.google.android.gms:play-services-oss-licenses:16.0.1"
-    implementation "com.google.android.ads.consent:consent-library:1.0.6"
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation "com.google.android.material:material:1.1.0"
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
+    implementation "androidx.cardview:cardview:1.0.0"
+    implementation "androidx.preference:preference:1.1.0"
+    implementation "androidx.recyclerview:recyclerview:1.1.0"
+    implementation 'androidx.core:core:1.2.0'
+    implementation "com.github.rumboalla.KryptoPrefs:kryptoprefs:0.4.3"
+    implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
+    implementation "com.google.android.ads.consent:consent-library:1.0.8"
     implementation "com.android.volley:volley:1.1.1"
 
     // Android WorkManager
-    implementation("android.arch.work:work-runtime-ktx:$workVersion", {
+    implementation("androidx.work:work-runtime-ktx:$work_version", {
         exclude group: "com.google.guava", module: "listenablefuture"
     })
-
 
     // Dex2Jar & friends
     implementation "asm:asm-all:3.3.1"
@@ -206,41 +227,21 @@ dependencies {
     implementation files("libs/dex-tools-0.0.9.15.jar")
     implementation files("libs/dex-translator-0.0.9.15.jar")
 
-    // CFR Decompiler
-    implementation "org.benf:cfr:0.138"
-
     // DX Tool. We are using jar-jar to repackage the dx lib.
     // As android comes with the same classes in the lib-art.jar package that is usually a tad bit
     // older than what we need and hence missing stuff.
-    jarJar files("libs/dx-1.14.jar")
-
-    // JaDX & friends
-    implementation files("libs/jadx-core-0.8.0.jar")
-    implementation files("libs/dx-1.14.jar")
-    implementation files("libs/android-5.1.jar")
-    implementation "org.slf4j:slf4j-api:1.7.25"
-    implementation "org.slf4j:slf4j-simple:1.7.25"
-    implementation "uk.com.robust-it:cloning:1.9.10"
-    // implementation "ch.qos.logback:logback-classic:1.2.3"
-    // implementation "ch.qos.logback:logback-core:1.2.3"
+    jarJar files("libs/dx-1.16.jar")
 
     // APK parser
-    implementation "net.dongliu:apk-parser:2.6.4"
-
-    // Fernflower decompiler
-    implementation "com.github.fesh0r:fernflower:2c2b00b369"
-
-    // RxAndroid & friends
-    implementation "io.reactivex.rxjava2:rxandroid:2.1.0"
-    implementation "io.reactivex.rxjava2:rxkotlin:2.3.0"
+    implementation 'net.dongliu:apk-parser:2.6.10'
 
     // Testing tools
-    testImplementation "junit:junit:4.12"
-    androidTestImplementation "junit:junit:4.12"
-    androidTestImplementation "androidx.test:core:$androidxVersion"
-    androidTestImplementation "androidx.test:rules:1.1.1"
-    androidTestImplementation "androidx.test.ext:junit:$androidxVersion"
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.1.0", {
+    testImplementation "junit:junit:4.13"
+    androidTestImplementation "junit:junit:4.13"
+    androidTestImplementation 'androidx.test:core:1.2.0'
+    androidTestImplementation 'androidx.test:rules:1.2.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.2.0', {
         exclude group: "com.android.support", module: "support-annotations"
         exclude group: "com.google.code.findbugs", module: "jsr305"
     })
@@ -249,98 +250,27 @@ dependencies {
     //noinspection GradleDependency
     implementation "commons-io:commons-io:2.5" // Fix to 2.5 for compatibility
     implementation "com.jakewharton.timber:timber:4.7.1"
-    implementation("org.solovyev.android:checkout:1.0.1", {
+    implementation('org.solovyev.android:checkout:1.2.2', {
         exclude group: "com.google.code.findbugs", module: "jsr305"
     })
-    implementation "pub.devrel:easypermissions:2.0.0"
-    implementation("org.solovyev.android:checkout:1.2.1", {
-        exclude group: "com.google.code.findbugs", module: "jsr305"
-    })
-    implementation ("com.github.kobakei:MaterialFabSpeedDial:1.2.1", {
+    implementation "pub.devrel:easypermissions:3.0.0"
+    implementation("com.github.kobakei:MaterialFabSpeedDial:2.0.0", {
         exclude group: "com.google.android.material", module: "material"
     })
     implementation "com.daimajia.numberprogressbar:library:1.4@aar"
     implementation "com.davemorrissey.labs:subsampling-scale-image-view:3.10.0"
-    implementation "com.github.angads25:filepicker:1.1.1"
-    implementation "com.github.javiersantos:PiracyChecker:1.2.4"
-    implementation "com.scottyab:secure-preferences-lib:0.1.4"
-    implementation "com.github.nekocode:Badge:2.0"
+    implementation "com.github.javiersantos:PiracyChecker:1.2.6"
+    implementation "com.github.nekocode:Badge:2.1"
+    debugImplementation("com.facebook.stetho:stetho:1.5.1", {
+        exclude group: "com.android.support", module: "support-annotations"
+        exclude group: "com.google.code.findbugs", module: "jsr305"
+    })
 
     implementation fileTree(dir: "build/libs", include: ["*.jar"])
 }
 
 jarJar {
-    rules = ["dx-1.14.jar": "com.android.** xyz.codezero.android.@1"]
-}
-
-apply plugin: "hiBeaver"
-
-import com.bryansharp.gradle.hibeaver.utils.MethodLogAdapter
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
-
-hiBeaver {
-    hiBeaverModifyName = "showJavaDexModifications"
-    showHelp = false
-    keepQuiet = false
-    watchTimeConsume = false
-
-    modifyMatchMaps = [
-            /*
-             * JaDX does not log class-by-class progress updates.
-             * So we patch the the method that saves the class at the bytecode level
-             * to invoke a log method at com.njlabs.showjava.Logger
-             *
-             * Note: this needs to be tested and adjusted for every update of JaDX.
-             */
-            "jadx.core.dex.visitors.SaveCode": [
-                    ["methodName": "save", "methodDesc": "(Ljava/io/File;Ljadx/api/JadxArgs;Ljadx/core/dex/nodes/ClassNode;)V", "adapter": {
-                        ClassVisitor cv, int access, String name, String desc, String signature, String[] exceptions ->
-                            MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions)
-                            MethodVisitor adapter = new MethodLogAdapter(methodVisitor) {
-                                @Override
-                                void visitCode() {
-                                    super.visitCode()
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0)
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1)
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2)
-                                    methodVisitor.visitMethodInsn(
-                                            Opcodes.INVOKESTATIC,
-                                            className2Path("com.njlabs.showjava.utils.streams.Logger"),
-                                            "logJadxClassWrite",
-                                            "(Ljava/io/File;Ljadx/api/JadxArgs;Ljadx/core/dex/nodes/ClassNode;)V",
-                                            false
-                                    )
-                                }
-                            }
-                            return adapter
-                    }]
-            ],
-            /*
-             * JaDX uses java.nio.* classes for checking if the file system is case sensitive or not.
-             * But java.nio.* classes are not available on on Android API < 26.
-             * So, we will patch the method to return true thereby skipping all java.nio.* usages.
-             *
-             * Note: this needs to be tested and adjusted for every update of JaDX.
-             */
-            "jadx.core.utils.files.FileUtils": [
-                    ["methodName": "isCaseSensitiveFS", "methodDesc": "(Ljava/io/File;)Z", "adapter": {
-                        ClassVisitor cv, int access, String name, String desc, String signature, String[] exceptions ->
-                            MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions)
-                            MethodVisitor adapter = new MethodLogAdapter(methodVisitor) {
-                                @Override
-                                void visitCode() {
-                                    methodVisitor.visitCode()
-                                    methodVisitor.visitInsn(Opcodes.ICONST_1)
-                                    methodVisitor.visitInsn(Opcodes.IRETURN)
-                                    methodVisitor.visitEnd()
-                                }
-                            }
-                            return adapter
-                    }]
-            ]
-    ]
+    rules = ["dx-1.16.jar": "com.android.** xyz.codezero.android.@1"]
 }
 
 apply plugin: "com.google.gms.google-services"

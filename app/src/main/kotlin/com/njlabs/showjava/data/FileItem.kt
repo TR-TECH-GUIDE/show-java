@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import org.apache.commons.io.FilenameUtils
 import java.io.File
 
 /**
- * Each file/folder item displayed in [com.njlabs.showjava.activities.explorer.navigator.NavigatorActivity]
+ * Each file/folder item displayed in [com.njlabs.showjava.fragments.explorer.navigator.NavigatorFragment]
  */
 class FileItem() : Parcelable {
 
@@ -60,7 +60,7 @@ class FileItem() : Parcelable {
 
 
     constructor(parcel: Parcel) : this() {
-        file = File(parcel.readString())
+        file = File(parcel.readString()!!)
         fileSize = parcel.readString() as String
         metaInfo = parcel.readString() as String
     }

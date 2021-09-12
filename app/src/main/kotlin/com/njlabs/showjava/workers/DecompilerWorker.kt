@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,10 +24,10 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.crashlytics.android.Crashlytics
-import com.njlabs.showjava.decompilers.BaseDecompiler
-import com.njlabs.showjava.decompilers.JarExtractionWorker
-import com.njlabs.showjava.decompilers.JavaExtractionWorker
-import com.njlabs.showjava.decompilers.ResourcesExtractionWorker
+import com.njlabs.showjava.extractors.BaseExtractor
+import com.njlabs.showjava.extractors.JarExtractor
+import com.njlabs.showjava.extractors.JavaExtractor
+import com.njlabs.showjava.extractors.ResourcesExtractor
 import com.njlabs.showjava.utils.ProcessNotifier
 import com.njlabs.showjava.utils.UserPreferences
 import timber.log.Timber
@@ -42,17 +42,20 @@ import java.util.concurrent.TimeUnit
  */
 class DecompilerWorker(val context: Context, params: WorkerParameters) : Worker(context, params) {
 
-    private var worker: BaseDecompiler? = null
+    private var worker: BaseExtractor? = null
     private lateinit var step: String
-    private val maxAttempts = params.inputData.getInt("maxAttempts", UserPreferences.DEFAULTS.MAX_ATTEMPTS)
+    private val maxAttempts =
+        params.inputData.getInt("maxAttempts", UserPreferences.DEFAULTS.MAX_ATTEMPTS)
 
     private val id: String = params.inputData.getString("id").toString()
     private val packageName: String = params.inputData.getString("name").toString()
     private val packageLabel: String = params.inputData.getString("label").toString()
     private val decompiler: String = params.inputData.getString("decompiler").toString()
-    private val chunkSize: Int = params.inputData.getInt("chunkSize", UserPreferences.DEFAULTS.CHUNK_SIZE)
-    private val memoryThreshold: Int = params.inputData.getInt("memoryThreshold", UserPreferences.DEFAULTS.MEMORY_THRESHOLD)
-    private val inputPackageFile: File = File(params.inputData.getString("inputPackageFile"))
+    private val chunkSize: Int =
+        params.inputData.getInt("chunkSize", UserPreferences.DEFAULTS.CHUNK_SIZE)
+    private val memoryThreshold: Int =
+        params.inputData.getInt("memoryThreshold", UserPreferences.DEFAULTS.MEMORY_THRESHOLD)
+    private val inputPackageFile: File = File(params.inputData.getString("inputPackageFile")!!)
 
     private val decompilerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
@@ -62,15 +65,24 @@ class DecompilerWorker(val context: Context, params: WorkerParameters) : Worker(
     init {
         if (tags.contains("jar-extraction")) {
             step = "jar-extraction"
-            worker = JarExtractionWorker(context, params.inputData)
+            worker = JarExtractor(
+                context,
+                params.inputData
+            )
         }
         if (tags.contains("java-extraction")) {
             step = "java-extraction"
-            worker = JavaExtractionWorker(context, params.inputData)
+            worker = JavaExtractor(
+                context,
+                params.inputData
+            )
         }
         if (tags.contains("resources-extraction")) {
             step = "resources-extraction"
-            worker = ResourcesExtractionWorker(context, params.inputData)
+            worker = ResourcesExtractor(
+                context,
+                params.inputData
+            )
         }
     }
 
@@ -85,7 +97,7 @@ class DecompilerWorker(val context: Context, params: WorkerParameters) : Worker(
      *
      */
     override fun doWork(): Result {
-        var result = if (runAttemptCount >= (maxAttempts - 1)) Result.FAILURE else Result.RETRY
+        var result = if (runAttemptCount >= (maxAttempts - 1)) Result.failure() else Result.retry()
         var ranOutOfMemory = false
         val notifier = ProcessNotifier(context, id)
             .withPackageInfo(packageName, packageLabel, inputPackageFile)
@@ -97,7 +109,9 @@ class DecompilerWorker(val context: Context, params: WorkerParameters) : Worker(
         Crashlytics.setInt("decompilation_chunk_size", chunkSize)
         Crashlytics.setInt("decompilation_memory_threshold", memoryThreshold)
 
-        worker ?.let {
+        var outputData = Data.Builder().build()
+
+        worker?.let {
             try {
                 val latch = CountDownLatch(1)
                 decompilerExecutor.execute {
@@ -122,14 +136,14 @@ class DecompilerWorker(val context: Context, params: WorkerParameters) : Worker(
             } catch (e: Exception) {
                 Timber.e(e)
             }
-            it.onStopped(false)
+            it.onStopped()
         }
 
         if (ranOutOfMemory) {
-            result = Result.FAILURE
+            result = Result.failure(outputData)
         }
 
-        if (result == Result.FAILURE) {
+        if (result == Result.failure()) {
             try {
                 if (ranOutOfMemory) {
                     notifier.lowMemory(decompiler)
@@ -155,11 +169,10 @@ class DecompilerWorker(val context: Context, params: WorkerParameters) : Worker(
      * Called when the job is stopped. (Either by user-initiated cancel or when complete)
      * We clean up the notifications and caches if any on shutdown.
      *
-     * @param [cancelled] true if the job was cancelled by the user
      */
-    override fun onStopped(cancelled: Boolean) {
-        super.onStopped(cancelled)
-        worker?.onStopped(cancelled)
+    override fun onStopped() {
+        super.onStopped()
+        worker?.onStopped()
     }
 
     companion object {
@@ -168,7 +181,7 @@ class DecompilerWorker(val context: Context, params: WorkerParameters) : Worker(
          */
         fun cancel(context: Context, id: String) {
             ProcessNotifier(context, id).cancel()
-            WorkManager.getInstance().cancelUniqueWork(id)
+            WorkManager.getInstance(context).cancelUniqueWork(id)
         }
     }
 }

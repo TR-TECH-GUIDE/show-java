@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@ package com.njlabs.showjava.utils.ktx
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
+import android.os.Bundle
 import java.security.MessageDigest
 import java.text.Normalizer
 import java.text.SimpleDateFormat
@@ -69,11 +71,24 @@ fun hashString(algorithm: String, input: String): String {
  * Check if the device is connected to a network.
  */
 fun checkDataConnection(context: Context): Boolean {
-    val connectivityMgr =
+    val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    return (connectivityMgr.activeNetworkInfo != null &&
-            connectivityMgr.activeNetworkInfo.isAvailable &&
-            connectivityMgr.activeNetworkInfo.isConnected)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val networkCapabilities = connectivityManager.activeNetwork ?: return false
+        val actNw =
+            connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
+        return when {
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+            else -> false
+        }
+    } else {
+        @Suppress("DEPRECATION") val activeNetworkInfo =
+            connectivityManager.activeNetworkInfo ?: return false
+        @Suppress("DEPRECATION") return (activeNetworkInfo.isAvailable && activeNetworkInfo.isConnected)
+    }
 }
 
 /**
@@ -112,5 +127,16 @@ fun getVersionCode(packageInfo: PackageInfo): Number {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
         packageInfo.longVersionCode
     else
+        @Suppress("DEPRECATION")
         packageInfo.versionCode
 }
+
+/**
+ * Create a [Bundle] from vararg pairs
+ */
+fun bundleOf(vararg pairs: Pair<String, Any?>) =
+    Bundle(pairs.size).apply {
+        for ((key, value) in pairs) {
+            putSmart(key, value)
+        }
+    }

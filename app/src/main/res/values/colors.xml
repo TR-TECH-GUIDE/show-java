@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Show Java - A java/apk decompiler for android
-  ~ Copyright (c) 2018 Niranjan Rajendran
+  ~ Copyright (c) 2019 Niranjan Rajendran
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
     <color name="ic_launcher_background">@color/white</color>
 
     <color name="black">#000000</color>
+    <color name="grey_900_darker">#1A1A1A</color>
     <color name="grey_900">#212121</color>
     <color name="grey_700">#616161</color>
     <color name="grey_400">#BDBDBD</color>

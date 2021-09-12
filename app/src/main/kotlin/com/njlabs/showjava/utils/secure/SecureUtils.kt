@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,18 +28,21 @@ import com.github.javiersantos.piracychecker.*
 import com.github.javiersantos.piracychecker.enums.InstallerID
 import com.github.javiersantos.piracychecker.enums.PiracyCheckerError
 import com.github.javiersantos.piracychecker.enums.PirateApp
+import com.kryptoprefs.preferences.KryptoBuilder
+import com.kryptoprefs.preferences.KryptoPrefs
 import com.njlabs.showjava.BuildConfig
+import com.njlabs.showjava.Constants
 import com.njlabs.showjava.utils.RequestQueue
 import com.njlabs.showjava.utils.SingletonHolder
-import com.securepreferences.SecurePreferences
 import io.michaelrocks.paranoid.Obfuscate
-import io.reactivex.Observable
-import io.reactivex.ObservableEmitter
 import org.json.JSONObject
 import org.solovyev.android.checkout.Billing
 import org.solovyev.android.checkout.Purchase
 import timber.log.Timber
 import java.security.MessageDigest
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 
 @Obfuscate
@@ -48,27 +51,34 @@ class SecureUtils(val context: Context) {
     private val packageName = "com.njlabs.showjava"
     private val backendUrl = BuildConfig.BACKEND_URL
     private var hasPurchasedPro: Boolean? = null
-    private var preferences: SecurePreferences? = null
+    private var preferences: KryptoPrefs? = null
 
     val iapProductId = BuildConfig.IAP_PRODUCT_ID
 
     val purchaseVerifierPath = BuildConfig.PURCHASE_VERIFIER_PATH
 
-    private fun getPreferences(): SecurePreferences {
+    private fun getPreferences(): KryptoPrefs {
         if (preferences == null) {
-            preferences = SecurePreferences(context)
+            preferences = KryptoBuilder.pref(
+                context, Constants.SHARED_PREFERENCES_NAME,
+                BuildConfig.ENCRYPTION_KEY, BuildConfig.ENCRYPTION_SALT, 16
+            )
         }
-        return preferences as SecurePreferences
+        return preferences!!
     }
 
-    fun isSafeExtended(allow: (() -> Unit), doNotAllow: ((PiracyCheckerError, PirateApp?) -> Unit), onError: (() -> Unit)) {
+    fun isSafeExtended(
+        allow: (() -> Unit),
+        doNotAllow: ((PiracyCheckerError, PirateApp?) -> Unit),
+        onError: (() -> Unit)
+    ) {
         Timber.d("[pa] isSafeExtended")
         context.piracyChecker {
             enableGooglePlayLicensing(BuildConfig.PLAY_LICENSE_KEY)
             if (BuildConfig.EXTENDED_VALIDATION) {
                 enableInstallerId(InstallerID.GOOGLE_PLAY)
-                enableUnauthorizedAppsCheck(true)
-                enableDebugCheck(true)
+                enableUnauthorizedAppsCheck()
+                enableDebugCheck()
             }
             callback {
                 doNotAllow { a, b ->
@@ -108,12 +118,12 @@ class SecureUtils(val context: Context) {
 
     fun onPurchaseComplete(purchase: Purchase) {
         hasPurchasedPro = true
-        getPreferences().edit().putBoolean(purchase.sku, true).commit()
+        getPreferences().putBoolean(purchase.sku, true)
     }
 
     fun onPurchaseRevert() {
         hasPurchasedPro = false
-        getPreferences().edit().putBoolean(iapProductId, false).commit()
+        getPreferences().putBoolean(iapProductId, false)
     }
 
     @SuppressLint("PrivateApi")
@@ -143,8 +153,8 @@ class SecureUtils(val context: Context) {
     /**
      * Make a JSON Request to the backend and return and observable
      */
-    fun makeJsonRequest(requestPath: String, payload: Map<String, String>): Observable<JSONObject> {
-        return Observable.create { emitter: ObservableEmitter<JSONObject> ->
+    suspend fun makeJsonRequest(requestPath: String, payload: Map<String, String>) =
+        suspendCoroutine<JSONObject> { cont ->
             val jsonBody = JSONObject()
             var backendUrl = this.backendUrl
             var path = requestPath
@@ -161,16 +171,13 @@ class SecureUtils(val context: Context) {
                 backendUrl + path,
                 jsonBody,
                 Response.Listener<JSONObject> {
-                    emitter.onNext(it)
-                    emitter.onComplete()
+                    cont.resume(it)
                 }, Response.ErrorListener {
-                    emitter.onError(it)
-                    emitter.onComplete()
+                    cont.resumeWithException(it)
                 }
             )
             RequestQueue.getInstance(context).addToRequestQueue(request)
         }
-    }
 
     companion object : SingletonHolder<SecureUtils, Context>(::SecureUtils)
 }

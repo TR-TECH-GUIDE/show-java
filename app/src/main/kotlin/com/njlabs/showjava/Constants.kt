@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,12 @@ package com.njlabs.showjava
  */
 object Constants {
 
-    const val STORAGE_PERMISSION_REQUEST = 1009
+    const val STORAGE_PERMISSION_REQUEST = 101
+    const val FILE_PICKER_REQUEST = 102
+
+    const val SHARED_PREFERENCES_NAME = "com.njlabs.showjava.state"
+    const val FRAGMENT_TAG = "com.njlabs.showjava.fragments.primary"
+    const val FRAGMENT_BACKSTACK = "com.njlabs.showjava.fragments.backstack.primary"
 
     interface EVENTS {
         companion object {
@@ -32,6 +37,7 @@ object Constants {
             const val TOGGLE_DARK_MODE = "toggle_dark_mode"
             const val SELECT_DECOMPILER = "select_decompiler"
             const val DECOMPILE_APP = "decompile_app"
+            const val REPORT_APP_LOW_MEMORY = "report_app_low_memory"
         }
     }
 
@@ -45,8 +51,10 @@ object Constants {
             const val STATUS_TITLE = "com.njlabs.showjava.worker.STATUS_TITLE"
             const val STATUS_MESSAGE = "com.njlabs.showjava.worker.STATUS_MESSAGE"
 
-            const val PROGRESS_NOTIFICATION_CHANNEL = "com.njlabs.showjava.worker.notification.progress"
-            const val COMPLETION_NOTIFICATION_CHANNEL = "com.njlabs.showjava.worker.notification.completion"
+            const val PROGRESS_NOTIFICATION_CHANNEL =
+                "com.njlabs.showjava.worker.notification.progress"
+            const val COMPLETION_NOTIFICATION_CHANNEL =
+                "com.njlabs.showjava.worker.notification.completion"
             const val PROGRESS_NOTIFICATION_ID = 1094
             const val COMPLETED_NOTIFICATION_ID = 1095
         }

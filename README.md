@@ -1,5 +1,5 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/niranjan94/show-java/badge.svg?style=flat-square)](https://snyk.io/test/github/niranjan94/show-java)
-  [![Build Status](https://img.shields.io/travis/niranjan94/show-java.svg?style=flat-square)](https://travis-ci.org/niranjan94/show-java) [![License Info](https://img.shields.io/badge/license-GNU_GPLv3-blue.svg?style=flat-square)](https://github.com/niranjan94/show-java) [![Play Store Info](https://img.shields.io/badge/Play_Store-v3.0.4-36B0C1.svg?style=flat-square)](https://play.google.com/store/apps/details?id=com.njlabs.showjava) [![GitHub app version](https://img.shields.io/badge/GitHub-v3.0.4-yellow.svg?style=flat-square)](https://github.com/niranjan94/show-java) [![Play Store downloads](https://img.shields.io/badge/downloads-416k%20total-E04253.svg?style=flat-square)](https://play.google.com/store/apps/details?id=com.njlabs.showjava)
+  [![Build Status](https://img.shields.io/travis/com/niranjan94/show-java/development.svg?style=flat-square)](https://travis-ci.com/niranjan94/show-java) [![License Info](https://img.shields.io/badge/license-GNU_GPLv3-blue.svg?style=flat-square)](https://github.com/niranjan94/show-java) [![Play Store Info](https://img.shields.io/badge/Play_Store-v3.0.5-36B0C1.svg?style=flat-square)](https://play.google.com/store/apps/details?id=com.njlabs.showjava) [![GitHub app version](https://img.shields.io/badge/GitHub-v3.0.6-yellow.svg?style=flat-square)](https://github.com/niranjan94/show-java) [![Play Store downloads](https://img.shields.io/badge/downloads-435k%20total-E04253.svg?style=flat-square)](https://play.google.com/store/apps/details?id=com.njlabs.showjava)
 
 
 ![ShowJava Banner v0.1](https://res.cloudinary.com/niranjan94/image/upload/v1518341743/banner_lihb7z.png)
@@ -14,7 +14,7 @@ This is a Decompiler that extracts the source code of an Android application (in
 
 ## Features
 
-- Select either **CFR 0.138**, **JaDX 0.8.0** or **FernFlower [`2c2b00b`](https://github.com/fesh0r/fernflower/tree/2c2b00b3695bad04056352d80be39c0e53999f0a) (analytical decompiler)** to use as the decompiler.
+- Select either **CFR 0.140**, **JaDX 0.9.0** or **FernFlower [`a0a8f0a`](https://github.com/fesh0r/fernflower/tree/a0a8f0a8dd777a7010958474acbca857071ee941) (analytical decompiler)** to use as the decompiler.
 - Runs directly on an android device (4.1.x and above).
 - Select apk/jar/dex from sdcard (or) from a list of installed applications.
 - Decompiles android resources (layouts, Drawables, Menus, AndroidManifest, image assets, values, etc).
@@ -25,18 +25,25 @@ This is a Decompiler that extracts the source code of an Android application (in
 
 ## Compatibility Matrix
 
-### Version 3.0
+### Version 3.1
 
 JaDX and Fernflower use newer Java features such as some types of lambda's which are not available on pre-N versions of Android. 
 
-|             | CFR 0.138          | JaDX 0.8.0         | Fernflower         |
+|             | CFR 0.149          | JaDX 0.9.0         | Fernflower         |
 |------------:|:------------------:|:------------------:|:------------------:|
 | Oreo        | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Nougat      | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Marshmallow | :white_check_mark: |        -           |         -          |
 | Lollipop    | :white_check_mark: |        -           |         -          |
 | KitKat      | :white_check_mark: |        -           |         -          |
-| Jelly Bean  | :white_check_mark: |        -           |         -          |
+
+### Version 3.0
+
+JaDX and Fernflower use newer Java features such as some types of lambda's which are not available on pre-N versions of Android. 
+
+|                       | CFR 0.140          | JaDX 0.9.0         | Fernflower         |
+|----------------------:|:------------------:|:------------------:|:------------------:|
+| Jelly Bean to KitKat  | :white_check_mark: |        -           |         -          |
 
 > Available from the [Play Store](https://play.google.com/store/apps/details?id=com.njlabs.showjava) on all Android devices running Jelly Bean and above.
 
@@ -46,8 +53,7 @@ JaDX and Fernflower use newer Java features such as some types of lambda's which
 |------------:|:------------------:|:------------------:|:------------------:|
 | ICS & Above | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-> Available from the [Play Store](https://play.google.com/store/apps/details?id=com.njlabs.showjava) on all Android devices running ICS.<br>
-> Can also be downloaded from [here](https://github.com/niranjan94/show-java/releases/tag/v2.1.0).
+> Can be downloaded from [here](https://github.com/niranjan94/show-java/releases/tag/v2.1.0).
 
 ## Contributing to ShowJava
 
@@ -58,7 +64,7 @@ Head over [here](https://github.com/niranjan94/show-java/blob/master/CONTRIBUTIN
 Unless explicitly stated otherwise all files in this repository are licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html). All projects **must** properly attribute [The Original Source](https://github.com/niranjan94/show-java). 
     
     Show Java - A java/apk decompiler for android
-    Copyright (C) 2018 Niranjan Rajendran
+    Copyright (C) 2019 Niranjan Rajendran
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

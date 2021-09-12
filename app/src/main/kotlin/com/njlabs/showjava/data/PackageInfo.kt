@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,14 @@ class PackageInfo() : Parcelable {
         file = File(filePath)
     }
 
-    constructor(label: String, name: String, version: String, filePath: String, type: Type, isSystemPackage: Boolean = false) : this() {
+    constructor(
+        label: String,
+        name: String,
+        version: String,
+        filePath: String,
+        type: Type,
+        isSystemPackage: Boolean = false
+    ) : this() {
         this.label = label
         this.name = name
         this.version = version
@@ -78,11 +85,14 @@ class PackageInfo() : Parcelable {
     }
 
     fun loadIcon(context: Context): Drawable {
-        return when(type) {
-            Type.APK -> context.packageManager.getPackageArchiveInfo(filePath, 0)
+        return when (type) {
+            Type.APK -> context.packageManager.getPackageArchiveInfo(filePath, 0)!!
                 .applicationInfo.loadIcon(context.packageManager)
             Type.JAR, Type.DEX ->
-                BitmapDrawable(context.resources, Identicon.createFromObject(this.name + this.label))
+                BitmapDrawable(
+                    context.resources,
+                    Identicon.createFromObject(this.name + this.label)
+                )
         }
     }
 
@@ -103,7 +113,10 @@ class PackageInfo() : Parcelable {
         /**
          * Get [PackageInfo] for an apk using the [context] and [android.content.pm.PackageInfo] instance.
          */
-        fun fromApkPackageInfo(context: Context, pack: android.content.pm.PackageInfo): PackageInfo {
+        fun fromApkPackageInfo(
+            context: Context,
+            pack: android.content.pm.PackageInfo
+        ): PackageInfo {
             return PackageInfo(
                 pack.applicationInfo.loadLabel(context.packageManager).toString(),
                 pack.packageName,
@@ -117,8 +130,8 @@ class PackageInfo() : Parcelable {
         /**
          * Get [PackageInfo] for an apk using the [context] and the [file].
          */
-        private fun fromApk(context: Context, file: File): PackageInfo {
-            val pack = context.packageManager.getPackageArchiveInfo(file.canonicalPath, 0)
+        private fun fromApk(context: Context, file: File): PackageInfo? {
+            val pack = context.packageManager.getPackageArchiveInfo(file.canonicalPath, 0)!!
             return PackageInfo(
                 pack.applicationInfo.loadLabel(context.packageManager).toString(),
                 pack.packageName,
@@ -132,7 +145,7 @@ class PackageInfo() : Parcelable {
         /**
          * Get [PackageInfo] for a jar from the [file].
          */
-        private fun fromJar(file: File, type: Type = Type.JAR): PackageInfo {
+        private fun fromJar(file: File, type: Type = Type.JAR): PackageInfo? {
             return PackageInfo(
                 file.name,
                 jarPackageName(file.name),
@@ -145,7 +158,7 @@ class PackageInfo() : Parcelable {
         /**
          * Get [PackageInfo] for a dex from the [file].
          */
-        private fun fromDex(file: File): PackageInfo {
+        private fun fromDex(file: File): PackageInfo? {
             return fromJar(file, Type.DEX)
         }
 
@@ -154,11 +167,15 @@ class PackageInfo() : Parcelable {
          * Get [PackageInfo] from a [file].
          */
         fun fromFile(context: Context, file: File): PackageInfo? {
-            return when(file.extension) {
-                "apk" -> fromApk(context, file)
-                "jar" -> fromJar(file)
-                "dex", "odex" -> fromDex(file)
-                else -> null
+            return try {
+                when (file.extension) {
+                    "apk" -> fromApk(context, file)
+                    "jar" -> fromJar(file)
+                    "dex", "odex" -> fromDex(file)
+                    else -> null
+                }
+            } catch (e: NullPointerException) {
+                null
             }
         }
 

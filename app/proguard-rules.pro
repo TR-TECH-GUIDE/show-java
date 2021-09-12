@@ -3,7 +3,6 @@
 -dontskipnonpubliclibraryclasses
 -dontpreverify
 -verbose
--libraryjars libs
 
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*,!code/allocation/variable
 -allowaccessmodification
@@ -32,7 +31,6 @@
 -keep class android.support.** { *; }
 -keep interface android.support.** { *; }
 
-
 -keepattributes *Annotation*
 -keepattributes Signature
 -keepattributes InnerClasses
@@ -50,8 +48,9 @@
 -keep class xyz.codezero.android.dex.** { *; }
 -keep class kotlin.** { *; }
 -keep class com.njlabs.showjava.MainApplication { *; }
--keep class com.njlabs.showjava.decompilers.** { *; }
+-keep class com.njlabs.showjava.extractors.** { *; }
 -keep class jadx.core.clsp.** { *; }
+-keep class com.facebook.stetho.** { *; }
 
 -keepattributes SourceFile,LineNumberTable
 

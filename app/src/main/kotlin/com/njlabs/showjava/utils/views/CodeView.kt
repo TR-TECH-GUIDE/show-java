@@ -9,7 +9,7 @@
 
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,7 +67,9 @@ class CodeView @JvmOverloads constructor(
         fun onLineClicked(lineNumber: Int, content: String)
     }
 
-    init { init(context) }
+    init {
+        init(context)
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -83,10 +85,9 @@ class CodeView @JvmOverloads constructor(
         webChromeClient = WebChromeClient()
         settings.javaScriptEnabled = true
         settings.cacheMode = WebSettings.LOAD_NO_CACHE
-        settings.setRenderPriority(WebSettings.RenderPriority.HIGH)
         settings.loadWithOverviewMode = true
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && BuildConfig.DEBUG) {
-            WebView.setWebContentsDebuggingEnabled(true)
+            setWebContentsDebuggingEnabled(true)
         }
     }
 
@@ -104,22 +105,22 @@ class CodeView @JvmOverloads constructor(
 
                     Ref: https://labs.mwrinfosecurity.com/blog/2013/09/24/webview-addjavascriptinterface-remote-code-execution/
                  */
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                    addJavascriptInterface(object : Any() {
-                        @JavascriptInterface
-                        fun onStartCodeHighlight() {
-                            onHighlightListener?.onStartCodeHighlight()
-                        }
-                        @JavascriptInterface
-                        fun onFinishCodeHighlight() {
-                            onHighlightListener?.onFinishCodeHighlight()
-                        }
-                        @JavascriptInterface
-                        fun onLineClicked(lineNumber: Int, content: String) {
-                            onHighlightListener?.onLineClicked(lineNumber, content)
-                        }
-                    }, "android")
-                }
+                addJavascriptInterface(object : Any() {
+                    @JavascriptInterface
+                    fun onStartCodeHighlight() {
+                        onHighlightListener?.onStartCodeHighlight()
+                    }
+
+                    @JavascriptInterface
+                    fun onFinishCodeHighlight() {
+                        onHighlightListener?.onFinishCodeHighlight()
+                    }
+
+                    @JavascriptInterface
+                    fun onLineClicked(lineNumber: Int, content: String) {
+                        onHighlightListener?.onLineClicked(lineNumber, content)
+                    }
+                }, "android")
             }
         } else {
             removeJavascriptInterface("android")
@@ -179,7 +180,9 @@ class CodeView @JvmOverloads constructor(
         showHideLineNumber(showLineNumber)
     }
 
-    fun load() { reload() }
+    fun load() {
+        reload()
+    }
 
     override fun reload() {
         loadDataWithBaseURL(
@@ -240,7 +243,7 @@ highlightLineNumber($highlightLineNumber)
     }
 
     private fun insertLineNumber(code: String?): String {
-        val m = Pattern.compile("(.*?)&#10;").matcher(code!!)
+        val m = Pattern.compile("(.*?)&#10;").matcher(code ?: "")
         val sb = StringBuffer()
         var pos = startLineNumber
         lineCount = 0
@@ -291,7 +294,7 @@ highlightLineNumber($highlightLineNumber)
     }
 
     private fun executeJavaScript(js: String) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             evaluateJavascript("javascript:$js", null)
         } else {
             loadUrl("javascript:$js")

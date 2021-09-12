@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +36,8 @@ import java.io.IOException
  */
 class SourceInfo() : Parcelable {
 
-    lateinit var packageLabel: String
-    lateinit var packageName: String
+    var packageLabel: String = "Unknown package"
+    var packageName: String = "unknown.package"
 
     var hasJavaSource: Boolean = false
     var hasXmlSource: Boolean = false
@@ -60,7 +60,15 @@ class SourceInfo() : Parcelable {
         sourceDirectory = sourceDir(packageName)
     }
 
-    constructor(packageLabel: String, packageName: String, hasJavaSource: Boolean, hasXmlSource:Boolean, createdAt: String, updatedAt: String, sourceSize: Long) : this() {
+    constructor(
+        packageLabel: String,
+        packageName: String,
+        hasJavaSource: Boolean,
+        hasXmlSource: Boolean,
+        createdAt: String,
+        updatedAt: String,
+        sourceSize: Long
+    ) : this() {
         this.packageLabel = packageLabel
         this.packageName = packageName
         this.hasJavaSource = hasJavaSource
@@ -193,6 +201,7 @@ class SourceInfo() : Parcelable {
         override fun createFromParcel(parcel: Parcel): SourceInfo {
             return SourceInfo(parcel)
         }
+
         override fun newArray(size: Int): Array<SourceInfo?> {
             return arrayOfNulls(size)
         }

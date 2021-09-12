@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,12 +32,12 @@ class ProductionTree : Timber.Tree() {
             return
         }
 
-        if (message.isNotEmpty()) {
-            Crashlytics.log("[$tag] $message")
-        }
-
-        if (t !== null) {
+        if (t !== null && t !is OutOfMemoryError && t !is StackOverflowError && t !is NoClassDefFoundError) {
+            if (message.isNotEmpty()) {
+                Crashlytics.log("[$tag] $message")
+            }
             Crashlytics.logException(t)
+            return
         }
 
         if (priority > Log.WARN) {

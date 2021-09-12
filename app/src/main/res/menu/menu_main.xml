@@ -1,6 +1,6 @@
 <!--
   ~ Show Java - A java/apk decompiler for android
-  ~ Copyright (c) 2018 Niranjan Rajendran
+  ~ Copyright (c) 2019 Niranjan Rajendran
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -19,7 +19,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.njlabs.showjava.activities.landing.LandingActivity">
+    tools:context="com.njlabs.showjava.activities.ContainerActivity">
+
+    <item
+        android:id="@+id/search"
+        android:icon="@drawable/ic_search_white"
+        android:title="@string/searchApps"
+        android:visible="false"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="collapseActionView|ifRoom" />
 
     <group android:id="@+id/code_explorer_group"
         android:checkableBehavior="none">
@@ -34,12 +42,20 @@
             tools:ignore="AlwaysShowAction" />
 
         <item
+            android:id="@+id/save_code"
+            android:icon="@drawable/ic_save_white"
+            android:orderInCategory="0"
+            android:title="@string/saveSource"
+            android:visible="false"
+            app:showAsAction="always"
+            tools:ignore="AlwaysShowAction" />
+
+        <item
             android:id="@+id/delete_code"
             android:icon="@drawable/ic_delete_white"
             android:orderInCategory="0"
             android:title="@string/deleteSource"
             android:visible="false"
-            app:showAsAction="always"
             tools:ignore="AlwaysShowAction" />
     </group>
 

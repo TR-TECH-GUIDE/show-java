@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ package com.njlabs.showjava.utils
 
 import android.content.Context
 import com.android.volley.Request
-import com.android.volley.RequestQueue as VolleyRequestQueue
 import com.android.volley.toolbox.Volley
+import com.android.volley.RequestQueue as VolleyRequestQueue
 
 /**
  * A singleton request queue to use with Volley for all network requests.
@@ -37,11 +37,13 @@ class RequestQueue constructor(context: Context) {
                 }
             }
     }
+
     private val requestQueue: VolleyRequestQueue by lazy {
         // applicationContext is key, it keeps you from leaking the
         // Activity or BroadcastReceiver if someone passes one in.
         Volley.newRequestQueue(context.applicationContext)
     }
+
     fun <T> addToRequestQueue(req: Request<T>) {
         requestQueue.add(req)
     }

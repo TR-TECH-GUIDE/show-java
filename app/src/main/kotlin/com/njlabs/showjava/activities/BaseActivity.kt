@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,36 +34,33 @@ import androidx.appcompat.widget.Toolbar
 import com.google.ads.consent.ConsentInformation
 import com.google.ads.consent.ConsentStatus
 import com.google.ads.mediation.admob.AdMobAdapter
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.*
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.njlabs.showjava.BuildConfig
 import com.njlabs.showjava.Constants
 import com.njlabs.showjava.MainApplication
 import com.njlabs.showjava.R
 import com.njlabs.showjava.activities.about.AboutActivity
 import com.njlabs.showjava.activities.purchase.PurchaseActivity
-import com.njlabs.showjava.activities.settings.SettingsActivity
-import com.njlabs.showjava.utils.secure.SecureUtils
 import com.njlabs.showjava.utils.UserPreferences
 import com.njlabs.showjava.utils.ktx.checkDataConnection
-import io.reactivex.disposables.CompositeDisposable
+import com.njlabs.showjava.utils.secure.SecureUtils
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
+import timber.log.Timber
 
 
 abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
-    protected lateinit var toolbar: Toolbar
+    lateinit var toolbar: Toolbar
     protected lateinit var context: AppCompatActivity
-    protected lateinit var userPreferences: UserPreferences
+    lateinit var userPreferences: UserPreferences
     protected lateinit var secureUtils: SecureUtils
     protected lateinit var mainApplication: MainApplication
 
     lateinit var firebaseAnalytics: FirebaseAnalytics
 
-    protected val disposables = CompositeDisposable()
-    protected var inEea = false
+    var inEea = false
 
     abstract fun init(savedInstanceState: Bundle?)
 
@@ -75,7 +72,8 @@ abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCal
         mainApplication = application as MainApplication
         firebaseAnalytics.setUserProperty("instance_id", mainApplication.instanceId)
 
-        userPreferences = UserPreferences(getSharedPreferences(UserPreferences.NAME, Context.MODE_PRIVATE))
+        userPreferences =
+            UserPreferences(getSharedPreferences(UserPreferences.NAME, Context.MODE_PRIVATE))
         secureUtils = SecureUtils.getInstance(applicationContext)
 
         if (userPreferences.customFont) {
@@ -148,7 +146,7 @@ abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCal
     }
 
     private fun setupGoogleAds() {
-        findViewById<AdView>(R.id.adView)?.let {it ->
+        findViewById<AdView>(R.id.adView)?.let { it ->
             it.visibility = View.GONE
             if (!isPro()) {
                 val extras = Bundle()
@@ -159,9 +157,14 @@ abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCal
 
                 val adRequest = AdRequest.Builder()
                     .addNetworkExtrasBundle(AdMobAdapter::class.java, extras)
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                    .addTestDevice(getString(R.string.adUnitId))
-                    .build()
+
+                if (BuildConfig.DEBUG) {
+                    val testDeviceIds =
+                        listOf(AdRequest.DEVICE_ID_EMULATOR, getString(R.string.deviceId))
+                    val configuration =
+                        RequestConfiguration.Builder().setTestDeviceIds(testDeviceIds).build()
+                    MobileAds.setRequestConfiguration(configuration)
+                }
 
                 it.adListener = object : AdListener() {
                     override fun onAdFailedToLoad(errorCode: Int) {
@@ -174,7 +177,7 @@ abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCal
                         it.visibility = View.VISIBLE
                     }
                 }
-                it.loadAd(adRequest)
+                it.loadAd(adRequest.build())
                 if (!checkDataConnection(context)) {
                     it.visibility = View.GONE
                 }
@@ -208,7 +211,6 @@ abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCal
                 return true
             }
             R.id.settings_option -> {
-                startActivity(Intent(baseContext, SettingsActivity::class.java))
                 return true
             }
             R.id.get_pro_option -> {
@@ -248,7 +250,6 @@ abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCal
     }
 
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == AppSettingsDialog.DEFAULT_SETTINGS_REQ_CODE) {
             if (!EasyPermissions.hasPermissions(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 Toast.makeText(
@@ -260,11 +261,8 @@ abstract class BaseActivity : AppCompatActivity(), EasyPermissions.PermissionCal
             } else {
                 postPermissionsGrant()
             }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        disposables.clear()
     }
 }

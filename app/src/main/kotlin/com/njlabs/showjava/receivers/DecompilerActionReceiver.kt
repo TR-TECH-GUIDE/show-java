@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +36,10 @@ class DecompilerActionReceiver : BroadcastReceiver() {
             Constants.WORKER.ACTION.STOP -> {
                 val id = intent.getStringExtra("id")
                 Timber.d("[cancel-request] ID: $id")
-                context?.let {
-                    DecompilerWorker.cancel(it, id)
+                id?.let {
+                    context?.let {
+                        DecompilerWorker.cancel(it, id)
+                    }
                 }
             }
             else -> {

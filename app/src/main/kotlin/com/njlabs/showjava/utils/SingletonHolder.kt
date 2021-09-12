@@ -6,9 +6,10 @@ package com.njlabs.showjava.utils
  */
 open class SingletonHolder<out T, in A>(creator: (A) -> T) {
     private var creator: ((A) -> T)? = creator
-    @Volatile private var instance: T? = null
+    @Volatile
+    private var instance: T? = null
 
-    fun getInstance(arg: A): T {
+    fun getInstance(arg: A? = null): T {
         val i = instance
         if (i != null) {
             return i
@@ -18,11 +19,15 @@ open class SingletonHolder<out T, in A>(creator: (A) -> T) {
             if (i2 != null) {
                 i2
             } else {
-                val created = creator!!(arg)
+                val created = creator!!(arg!!)
                 instance = created
                 creator = null
                 created
             }
         }
+    }
+
+    fun init(arg: A? = null) {
+        getInstance(arg)
     }
 }

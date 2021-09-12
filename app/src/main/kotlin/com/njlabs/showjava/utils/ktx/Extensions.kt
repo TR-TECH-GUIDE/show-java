@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,19 +18,14 @@
 
 package com.njlabs.showjava.utils.ktx
 
-import android.graphics.Bitmap
-import android.graphics.Paint
-import android.graphics.Canvas
-import android.graphics.Rect
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffXfermode
-import android.os.Build
+import android.graphics.*
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Parcelable
 import java.io.File
 import java.io.InputStream
 import java.io.Serializable
+import kotlin.math.max
 
 /**
  * Convert an [InputStream] to a file given a path as a [String]
@@ -53,29 +48,34 @@ fun <V> Map<String, V>.toBundle(bundle: Bundle = Bundle()): Bundle = bundle.appl
     forEach {
         val k = it.key
         val v = it.value
-        when (v) {
-            is IBinder -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                    putBinder(k, v)
-                }
-            }
-            is Bundle -> putBundle(k, v)
-            is Byte -> putByte(k, v)
-            is ByteArray -> putByteArray(k, v)
-            is String -> putString(k, v)
-            is Char -> putChar(k, v)
-            is CharArray -> putCharArray(k, v)
-            is CharSequence -> putCharSequence(k, v)
-            is Float -> putFloat(k, v)
-            is FloatArray -> putFloatArray(k, v)
-            is Parcelable -> putParcelable(k, v)
-            is Serializable -> putSerializable(k, v)
-            is Short -> putShort(k, v)
-            is ShortArray -> putShortArray(k, v)
-            is Boolean -> putBoolean(k, v)
-            is Int -> putInt(k, v)
-            is IntArray -> putIntArray(k, v)
-        }
+        bundle.putSmart(k, v)
+    }
+}
+
+/**
+ * Put to [Bundle] using the right method based on the type
+ */
+fun Bundle.putSmart(k: String, v: Any?) = when (v) {
+    is IBinder -> {
+        putBinder(k, v)
+    }
+    is Bundle -> putBundle(k, v)
+    is Byte -> putByte(k, v)
+    is ByteArray -> putByteArray(k, v)
+    is String -> putString(k, v)
+    is Char -> putChar(k, v)
+    is CharArray -> putCharArray(k, v)
+    is CharSequence -> putCharSequence(k, v)
+    is Float -> putFloat(k, v)
+    is FloatArray -> putFloatArray(k, v)
+    is Parcelable -> putParcelable(k, v)
+    is Serializable -> putSerializable(k, v)
+    is Short -> putShort(k, v)
+    is ShortArray -> putShortArray(k, v)
+    is Boolean -> putBoolean(k, v)
+    is Int -> putInt(k, v)
+    is IntArray -> putIntArray(k, v)
+    else -> {
     }
 }
 
@@ -87,10 +87,11 @@ fun <V> Map<String, V>.toBundle(bundle: Bundle = Bundle()): Bundle = bundle.appl
 fun Bitmap.getCircularBitmap(config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap {
     // circle configuration
     val circlePaint = Paint().apply { isAntiAlias = true }
-    val circleRadius = Math.max(width, height) / 2f
+    val circleRadius = max(width, height) / 2f
 
     // output bitmap
-    val outputBitmapPaint = Paint(circlePaint).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN) }
+    val outputBitmapPaint =
+        Paint(circlePaint).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN) }
     val outputBounds = Rect(0, 0, width, height)
     val output = Bitmap.createBitmap(width, height, config)
 
@@ -100,4 +101,3 @@ fun Bitmap.getCircularBitmap(config: Bitmap.Config = Bitmap.Config.ARGB_8888): B
         output
     }
 }
-

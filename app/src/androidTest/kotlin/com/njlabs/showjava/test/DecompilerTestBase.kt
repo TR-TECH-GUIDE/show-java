@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,15 +19,14 @@
 package com.njlabs.showjava.test
 
 import android.os.Build
-import android.os.Environment
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
 import androidx.work.ListenableWorker
 import com.njlabs.showjava.data.PackageInfo
-import com.njlabs.showjava.decompilers.BaseDecompiler
-import com.njlabs.showjava.decompilers.JarExtractionWorker
-import com.njlabs.showjava.decompilers.JavaExtractionWorker
-import com.njlabs.showjava.decompilers.ResourcesExtractionWorker
+import com.njlabs.showjava.extractors.BaseExtractor
+import com.njlabs.showjava.extractors.JarExtractor
+import com.njlabs.showjava.extractors.JavaExtractor
+import com.njlabs.showjava.extractors.ResourcesExtractor
 import junit.framework.TestCase
 import org.junit.Assume
 import org.junit.Before
@@ -41,8 +40,10 @@ abstract class DecompilerTestBase {
     abstract val type: PackageInfo.Type
 
     private val testAssets: File
-        get() = File(Environment.getExternalStorageDirectory(), "show-java")
-            .resolve("test-assets")
+        get() {
+            val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+            return appContext.filesDir.resolve("test-assets")
+        }
 
     private val testApplicationFile: File
         get() = testAssets.resolve("test-application.${type.name.toLowerCase()}")
@@ -80,14 +81,17 @@ abstract class DecompilerTestBase {
     fun checkDecompilerAvailability() {
         Assume.assumeTrue(
             "Assume $decompiler is available on API ${Build.VERSION.SDK_INT}.",
-            BaseDecompiler.isAvailable(decompiler)
+            BaseExtractor.isAvailable(decompiler)
         )
     }
 
     @Test
     fun testDecompiler() {
-        val data = BaseDecompiler.formData(hashMapOf(
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+        val data = BaseExtractor.formData(hashMapOf(
             "shouldIgnoreLibs" to true,
+            "keepIntermediateFiles" to true,
             "chunkSize" to 2000,
             "maxAttempts" to 1,
             "memoryThreshold" to 80,
@@ -98,39 +102,41 @@ abstract class DecompilerTestBase {
             "type" to type.ordinal
         ))
 
-        val packageInfo = PackageInfo.fromFile(
-            InstrumentationRegistry.getInstrumentation().targetContext,
-            testApplicationFile
-        )
+        val packageInfo = PackageInfo.fromFile(context, testApplicationFile)
 
         TestCase.assertNotNull("Can parse PackageInfo from file", packageInfo)
 
         val outputDirectory = File(
-            Environment.getExternalStorageDirectory(), "show-java/sources/${data.getString("name")}"
+            context.filesDir, "show-java/sources/${data.getString("name")}"
         )
 
         if (outputDirectory.exists()) {
             outputDirectory.deleteRecursively()
+        } else {
+            outputDirectory.mkdirs()
         }
 
-        val appContext = InstrumentationRegistry.getInstrumentation()
-
         var result: ListenableWorker.Result
-        var worker: BaseDecompiler
+        var worker: BaseExtractor
 
-        worker = JarExtractionWorker(appContext.targetContext, data)
+        worker =
+            JarExtractor(context, data)
         result = worker.doWork()
         worker.onStopped()
-        TestCase.assertEquals("Can extract JAR", ListenableWorker.Result.SUCCESS, result)
+        TestCase.assertEquals("Can extract JAR", ListenableWorker.Result.success(), result)
 
-        worker = JavaExtractionWorker(appContext.targetContext, data)
+        worker =
+            JavaExtractor(context, data)
         result = worker.doWork()
         worker.onStopped()
-        TestCase.assertEquals("Can extract JAVA Code", ListenableWorker.Result.SUCCESS, result)
+        TestCase.assertEquals("Can extract JAVA Code", ListenableWorker.Result.success(), result)
 
-        worker = ResourcesExtractionWorker(appContext.targetContext, data)
+        worker = ResourcesExtractor(
+            context,
+            data
+        )
         result = worker.doWork()
         worker.onStopped()
-        TestCase.assertEquals("Can extract resources", ListenableWorker.Result.SUCCESS, result)
+        TestCase.assertEquals("Can extract resources", ListenableWorker.Result.success(), result)
     }
 }

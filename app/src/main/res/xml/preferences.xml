@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Show Java - A java/apk decompiler for android
-  ~ Copyright (c) 2018 Niranjan Rajendran
+  ~ Copyright (c) 2019 Niranjan Rajendran
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -30,6 +30,13 @@
             android:defaultValue="true"
             android:summary="@string/ignoreLibrariesPreferenceSummary"
             android:title="@string/speedUpDecompile" />
+
+        <SwitchPreference
+            app:iconSpaceReserved="false"
+            android:key="keepIntermediateFiles"
+            android:defaultValue="false"
+            android:summary="@string/keepIntermediateFilesSummary"
+            android:title="@string/keepIntermediateFiles" />
 
     </PreferenceCategory>
 
@@ -74,7 +81,6 @@
         <EditTextPreference
             android:inputType="number"
             android:defaultValue="500"
-            android:numeric="integer"
             android:key="chunkSize"
             android:maxLines="1"
             android:singleLine="true"
@@ -82,7 +88,6 @@
 
         <EditTextPreference
             android:inputType="number"
-            android:numeric="integer"
             android:key="maxAttempts"
             android:defaultValue="2"
             android:maxLines="1"
@@ -92,7 +97,6 @@
         <EditTextPreference
             android:inputType="number"
             android:key="memoryThreshold"
-            android:numeric="integer"
             android:defaultValue="80"
             android:maxLines="1"
             android:singleLine="true"

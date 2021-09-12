@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,17 +19,15 @@
 package com.njlabs.showjava.utils.streams
 
 import androidx.annotation.NonNull
-import com.njlabs.showjava.decompilers.BaseDecompiler
 import timber.log.Timber
 import java.io.OutputStream
 import java.nio.charset.Charset
-import java.util.Arrays
 
 
 /**
  * A custom output stream that strips unnecessary stuff from raw input stream
  */
-class ProgressStream(val decompiler: BaseDecompiler) : OutputStream() {
+class ProgressStream(private val sendStatus: (log: String) -> Unit) : OutputStream() {
 
     private val validProgressRegex = Regex("^[^.][a-zA-Z/\$;\\s0-9.]+\$")
 
@@ -40,7 +38,8 @@ class ProgressStream(val decompiler: BaseDecompiler) : OutputStream() {
         for (part in arrayOf(
             "TRYBLOCK", "stack info", "Produces", "ASTORE", "targets",
             "WARN jadx", "thread-1", "ERROR jadx", "JadxRuntimeException",
-            "java.lang")) {
+            "java.lang"
+        )) {
             if (string.contains(part, true)) {
                 return true
             }
@@ -51,7 +50,7 @@ class ProgressStream(val decompiler: BaseDecompiler) : OutputStream() {
 
     override fun write(@NonNull data: ByteArray, offset: Int, length: Int) {
         var str = String(
-            Arrays.copyOfRange(data, offset, length),
+            data.copyOfRange(offset, length),
             Charset.forName("UTF-8")
         )
             .replace("\n", "")
@@ -77,7 +76,7 @@ class ProgressStream(val decompiler: BaseDecompiler) : OutputStream() {
 
         if (str.isNotEmpty()) {
             Timber.d("[stdout] %s", str)
-            decompiler.sendStatus(str)
+            sendStatus(str)
         }
     }
 

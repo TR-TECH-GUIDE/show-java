@@ -1,6 +1,6 @@
 <!--
   ~ Show Java - A java/apk decompiler for android
-  ~ Copyright (c) 2018 Niranjan Rajendran
+  ~ Copyright (c) 2019 Niranjan Rajendran
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -88,9 +88,9 @@
     <string name="buyNow">Buy Now</string>
 
     <string-array name="decompilers" translatable="false">
-        <item><xliff:g>CFR 0.138</xliff:g></item>
-        <item><xliff:g>JaDX 0.8.0</xliff:g></item>
-        <item><xliff:g>FernFlower 2c2b00b</xliff:g></item>
+        <item><xliff:g>CFR 0.140</xliff:g></item>
+        <item><xliff:g>JaDX 0.9.0</xliff:g></item>
+        <item><xliff:g>FernFlower a0a8f0a</xliff:g></item>
     </string-array>
 
     <string-array name="decompilersValues" translatable="false">
@@ -109,8 +109,11 @@
     <string name="openSourceLicense">Open source licenses</string>
     <string name="tapViewOpenSourceLicenses">Tap to view open source licenses</string>
     <string name="startingDexToJar">Starting DEX to JAR Conversion</string>
+    <string name="saveSource">Save source to external memory</string>
     <string name="shareSource">Share source</string>
     <string name="deleteSource">Delete source</string>
+    <string name="decompilerUnavailable">Decompiler Unavailable</string>
+    <string name="decompilerUnavailableExplanation">JaDX and Fernflower use newer Java features such as some types of lambda\'s which are not available on pre-N versions of Android.\n\nPlease use CFR instead.</string>
     <string name="deleteSourceHistory">Delete source history</string>
     <string name="deleteSourceConfirm">Are you sure you want to delete the decompiled source ?</string>
     <string name="deleteSourceHistoryConfirm">Are you sure you want to delete source history ?</string>
@@ -146,7 +149,7 @@
     <string name="showMemoryUsageSummary">Display live app memory usage on the decompiler screen</string>
     <string name="lowMemory">Low memory</string>
     <string name="lowMemoryInfo">The selected decompiler ran out of RAM while attempting to decompile</string>
-    <string name="lowMemoryExtraInfo">Try reducing the classes per chunk (in settings) and/or pick another decompiler.</string>
+    <string name="lowMemoryExtraInfo">Try reducing the classes per chunk or increasing memory threshold and/or pick another decompiler.</string>
     <string name="lowMemoryStatusInfo">Ran out of RAM. Tap for more info.</string>
     <string name="memoryThreshold">Memory usage threshold (in %)</string>
     <string name="darkMode">Dark mode (Beta)</string>
@@ -176,4 +179,14 @@
     <string name="errorLoadingInputFile">Error loading input file</string>
     <string name="genericError">An unexpected error occurred</string>
     <string name="errorLoadingFiles">An error occurred while loading files</string>
+    <string name="decompilersUnavailable">JaDX and Fernflower decompilers are available only on android devices running Android 7.0 and above.</string>
+    <string name="keepIntermediateFiles">Keep intermediate files</string>
+    <string name="keepIntermediateFilesSummary">Do not delete dex &amp; jar files created during the decompilation</string>
+
+    <string name="appsListItemTransitionName">appsListItemTransition</string>
+    <string name="decompilerListItemTransitionName">decompilerListItemTransition</string>
+    <string name="title_jadx_24">JADX Decompiler</string>
+    <string name="title_fernflower_24">Fernflower</string>
+    <string name="title_cfr_16">CFR</string>
+
 </resources>

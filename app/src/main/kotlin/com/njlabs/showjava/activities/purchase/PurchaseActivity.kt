@@ -1,6 +1,6 @@
 /*
  * Show Java - A java/apk decompiler for android
- * Copyright (c) 2018 Niranjan Rajendran
+ * Copyright (c) 2019 Niranjan Rajendran
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package com.njlabs.showjava.activities.purchase
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
 import android.view.View
 import android.widget.Toast
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -27,7 +28,9 @@ import com.njlabs.showjava.R
 import com.njlabs.showjava.activities.BaseActivity
 import com.njlabs.showjava.utils.secure.PurchaseUtils
 import kotlinx.android.synthetic.main.activity_purchase.*
-import org.solovyev.android.checkout.*
+import org.solovyev.android.checkout.BillingRequests
+import org.solovyev.android.checkout.Checkout
+import org.solovyev.android.checkout.ProductTypes
 import timber.log.Timber
 
 
@@ -68,7 +71,10 @@ class PurchaseActivity : BaseActivity() {
                     if (app != null) {
                         Toast.makeText(
                             context,
-                            getString(R.string.deviceVerificationFailedPirateApp, "${app.name} (${app.packageName})"),
+                            getString(
+                                R.string.deviceVerificationFailedPirateApp,
+                                "${app.name} (${app.packageName})"
+                            ),
                             Toast.LENGTH_LONG
                         ).show()
                     } else {
@@ -90,7 +96,6 @@ class PurchaseActivity : BaseActivity() {
         )
 
         Timber.d("[pa] initComplete")
-
     }
 
     private fun makePurchase() {
@@ -120,5 +125,9 @@ class PurchaseActivity : BaseActivity() {
         if (::purchaseUtils.isInitialized) {
             purchaseUtils.checkout.onActivityResult(requestCode, resultCode, data)
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        return true
     }
 }
